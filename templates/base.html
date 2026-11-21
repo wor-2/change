@@ -1,0 +1,9 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{% block title %}Change Management{% endblock %}</title><link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}"></head><body>
+{% if g.user %}<header><b>Change Management Portal</b>
+<a href="{{ url_for('dashboard') }}">Changes</a><a href="{{ url_for('new') }}">New change request</a>
+{% if g.user.role in ('admin','cab') %}<a href="{{ url_for('notifications') }}">Notifications</a>{% endif %}
+{% if g.user.role=='admin' %}<a href="{{ url_for('users') }}">Users</a>{% endif %}
+<span class="sp"></span><span>{{ g.user.display_name }} ({{ g.user.role }})</span><a href="{{ url_for('logout') }}">Sign out</a></header>{% endif %}
+<main>{% for cat,m in get_flashed_messages(with_categories=true) %}<div class="flash {{cat}}">{{ m }}</div>{% endfor %}
+{% block body %}{% endblock %}</main></body></html>

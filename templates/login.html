@@ -1,0 +1,11 @@
+{% extends "base.html" %}{% block body %}
+<div class="loginwrap">
+<div class="lp"><h1>Change Management Portal</h1><p>Every change, tracked from request to closure.</p>
+<ol><li>Sign in with Active Directory</li><li>Submit a change request</li><li>Confirm and get your Change ID</li><li>Review and triage</li>
+<li>Assess business and technical impact</li><li>Approval by CAB and approvers</li><li>Execute and close</li><li>Get notified by email and WhatsApp</li></ol></div>
+<div class="rp"><h2>Sign in</h2>
+<form method="post"><label for="u">Username</label><input id="u" name="username" autofocus required>
+<label for="p">Password</label><input id="p" name="password" type="password" required>
+<div class="row"><button style="width:100%">Sign in</button></div></form>
+<p class="muted" style="margin-top:18px">Demo mode: admin, alice, cab1, tech1, biz1, appr1 with password123</p></div></div>
+{% endblock %}

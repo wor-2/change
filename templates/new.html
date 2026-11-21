@@ -1,0 +1,15 @@
+{% extends "base.html" %}{% block body %}
+<h1>New change request</h1>
+<form method="post" enctype="multipart/form-data" class="card"><div class="grid">
+<div class="full"><label>Title *</label><input name="title" value="{{ f.title }}" required></div>
+<div><label>Application *</label><input name="application" value="{{ f.application }}" required></div>
+<div><label>Environment *</label><select name="environment">{% for e in ENVS %}<option {{ 'selected' if f.environment==e }}>{{e}}</option>{% endfor %}</select></div>
+<div><label>Change type *</label><select name="change_type">{% for e in TYPES %}<option {{ 'selected' if f.change_type==e }}>{{e}}</option>{% endfor %}</select></div>
+<div><label>Priority</label><select name="priority">{% for e in ['Low','Medium','High','Critical'] %}<option {{ 'selected' if (f.priority or 'Medium')==e }}>{{e}}</option>{% endfor %}</select></div>
+<div><label>Planned start *</label><input type="datetime-local" name="planned_start" value="{{ f.planned_start }}" required></div>
+<div><label>Planned end *</label><input type="datetime-local" name="planned_end" value="{{ f.planned_end }}" required></div>
+<div class="full"><label>Description *</label><textarea name="description" required>{{ f.description }}</textarea></div>
+<div class="full"><label>Also notify (comma-separated emails)</label><input name="stakeholders" value="{{ f.stakeholders }}"></div>
+<div class="full"><label>Supporting documents</label><input type="file" name="files" multiple></div></div>
+<div class="row"><button>Submit change request</button><a class="btn alt" href="{{ url_for('dashboard') }}">Cancel</a></div></form>
+{% endblock %}

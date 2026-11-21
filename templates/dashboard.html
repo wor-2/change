@@ -1,0 +1,16 @@
+{% extends "base.html" %}{% block body %}
+<h1>Change requests</h1>
+<div class="kpis">
+<div class="kpi"><b>{{ rows|rejectattr('status','in',['COMPLETED','REJECTED'])|list|length }}</b><span>Open changes</span></div>
+<div class="kpi k2"><b>{{ rows|selectattr('todo')|list|length }}</b><span>Waiting for your action</span></div>
+<div class="kpi k3"><b>{{ rows|selectattr('status','eq','COMPLETED')|list|length }}</b><span>Completed</span></div></div>
+<div class="card"><form method="get" class="row" style="margin:0 0 12px;align-items:center">
+<select name="status" style="max-width:260px" onchange="this.form.submit()"><option value="">All statuses</option>
+{% for k,v in {'SUBMITTED':'Submitted','ASSESSMENT':'Impact assessment','PENDING_APPROVAL':'Pending approval','APPROVED':'Approved','REJECTED':'Rejected','CHANGES_REQUESTED':'Changes requested','COMPLETED':'Completed'}.items() %}
+<option value="{{k}}" {{ 'selected' if k==flt }}>{{v}}</option>{% endfor %}</select><a class="btn" href="{{ url_for('new') }}">New change request</a></form>
+{% if rows %}<table><tr><th>Change ID</th><th>Title</th><th>Application</th><th>Env</th><th>Requester</th><th>Planned start</th><th>Status</th></tr>
+{% for r in rows %}<tr class="{{ 'todo' if r.todo }}"><td><a href="{{ url_for('detail',cid=r.id) }}">{{ r.change_no }}</a>{% if r.todo %}<br><span class="muted">Needs your action</span>{% endif %}</td>
+<td>{{ r.title }}</td><td>{{ r.application }}</td><td>{{ r.environment }}</td><td>{{ r.requester }}</td><td>{{ r.planned_start.strftime('%d %b %Y %H:%M') }}</td>
+<td><span class="pill {{r.status}}">{{ r.status.replace('_',' ').title() }}</span></td></tr>{% endfor %}</table>
+{% else %}<p>No change requests yet. Create the first one with “New change request”.</p>{% endif %}</div>
+{% endblock %}

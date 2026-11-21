@@ -1,0 +1,42 @@
+{% extends "base.html" %}{% block body %}
+<h1>{{ cr.change_no }} &nbsp;<span class="pill {{cr.status}}">{{ cr.status.replace('_',' ').title() }}</span></h1>
+<ol class="stepper">{% for s in STEPS %}<li class="{{ 'done' if loop.index < step or (cr.status in ('COMPLETED','REJECTED') and loop.index==step) else ('now' if loop.index==step) }}">{{ s }}</li>{% endfor %}</ol>
+
+{% if act %}<div class="card act"><h2>Your action</h2>
+<form method="post" action="{{ url_for('act',cid=cr.id,action=act) }}" enctype="multipart/form-data">
+{% if act=='triage' %}
+ <label>Decision</label><select name="decision"><option value="accept">Accept and assign</option><option value="return">Return to requester (incomplete)</option></select>
+ <div class="grid"><div><label>Assign to team</label><select name="assigned_team"><option value="">Choose…</option>{% for t in TEAMS %}<option>{{t}}</option>{% endfor %}</select></div>
+ <div><label>Approver</label><select name="approver_id"><option value="">Choose…</option>{% for a in approvers %}<option value="{{a.id}}">{{a.display_name}}</option>{% endfor %}</select></div></div>
+ <label>Triage notes</label><textarea name="triage_notes"></textarea>
+{% elif act=='assess' %}
+ <label>Business impact</label><textarea name="business_impact"></textarea><label>Technical impact</label><textarea name="technical_impact"></textarea>
+ <label>Affected services</label><textarea name="affected_services"></textarea><label>Implementation plan</label><textarea name="implementation_plan"></textarea>
+{% elif act=='decide' %}
+ <label>Decision</label><select name="decision"><option value="approve">Approve</option><option value="changes">Request changes</option><option value="reject">Reject</option></select>
+ <label>Comments (required unless approving)</label><textarea name="comment"></textarea>
+{% elif act=='execute' %}
+ <label>Execution details</label><textarea name="execution_notes" placeholder="What was done, issues found, results"></textarea>
+ <label>Screenshots / evidence</label><input type="file" name="files" multiple>
+ <label><input type="checkbox" name="verified" value="1">I verified the implementation succeeded</label>
+{% elif act=='resubmit' %}
+ <label>Updated description</label><textarea name="description">{{ cr.description }}</textarea><label>More documents</label><input type="file" name="files" multiple>
+{% endif %}
+<div class="row"><button>{{ {'triage':'Save triage','assess':'Send for approval','decide':'Record decision','execute':'Close change request','resubmit':'Resubmit change'}[act] }}</button></div></form></div>{% endif %}
+
+<div class="card"><h2>{{ cr.title }}</h2><dl>
+<dt>Requester</dt><dd>{{ cr.requester }}</dd><dt>Application</dt><dd>{{ cr.application }}</dd><dt>Environment</dt><dd>{{ cr.environment }}</dd>
+<dt>Type / priority</dt><dd>{{ cr.change_type }} / {{ cr.priority }}</dd>
+<dt>Planned window</dt><dd>{{ cr.planned_start.strftime('%d %b %Y %H:%M') }} to {{ cr.planned_end.strftime('%d %b %Y %H:%M') }}</dd>
+<dt>Description</dt><dd>{{ cr.description }}</dd>
+{% if cr.assigned_team %}<dt>Assigned team</dt><dd>{{ cr.assigned_team }}</dd><dt>Approver</dt><dd>{{ cr.approver }}</dd>{% endif %}
+{% if cr.triage_notes %}<dt>Triage notes</dt><dd>{{ cr.triage_notes }}</dd>{% endif %}
+{% if cr.business_impact %}<dt>Business impact</dt><dd>{{ cr.business_impact }}</dd><dt>Technical impact</dt><dd>{{ cr.technical_impact }}</dd>
+<dt>Affected services</dt><dd>{{ cr.affected_services }}</dd><dt>Implementation plan</dt><dd>{{ cr.implementation_plan }}</dd>{% endif %}
+{% if cr.approval_comment %}<dt>Approver comments</dt><dd>{{ cr.approval_comment }}</dd>{% endif %}
+{% if cr.execution_notes %}<dt>Execution details</dt><dd>{{ cr.execution_notes }}</dd>{% endif %}
+</dl></div>
+
+<div class="card"><h2>Attachments</h2>{% for f in files %}<div><a href="{{ url_for('download',fid=f.id) }}">{{ f.filename }}</a> <span class="muted">({{ f.stage }})</span></div>{% else %}<p class="muted">No attachments.</p>{% endfor %}</div>
+<div class="card"><h2>History</h2><table>{% for h in hist %}<tr><td style="width:160px">{{ h.created_at.strftime('%d %b %Y %H:%M') }}</td><td>{{ h.actor }}</td><td>{{ h.action }}{% if h.comment %}<br><span class="muted">{{ h.comment }}</span>{% endif %}</td></tr>{% endfor %}</table></div>
+{% endblock %}

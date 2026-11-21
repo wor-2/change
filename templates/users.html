@@ -1,0 +1,6 @@
+{% extends "base.html" %}{% block body %}<h1>Users and roles</h1><div class="card"><table>
+<tr><th>User</th><th>Role</th><th>Email</th><th>Mobile (WhatsApp, +91…)</th><th></th></tr>
+{% for u in rows %}<tr><form method="post"><input type="hidden" name="id" value="{{u.id}}">
+<td>{{ u.username }}<br><span class="muted">{{ u.display_name }}</span></td>
+<td><select name="role">{% for r in ROLES %}<option {{ 'selected' if r==u.role }}>{{r}}</option>{% endfor %}</select></td>
+<td><input name="email" value="{{ u.email or '' }}"></td><td><input name="phone" value="{{ u.phone or '' }}"></td><td><button>Save</button></td></form></tr>{% endfor %}</table></div>{% endblock %}
