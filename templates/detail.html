@@ -1,5 +1,5 @@
 {% extends "base.html" %}{% block body %}
-<h1>{{ cr.change_no }} &nbsp;<span class="pill {{cr.status}}">{{ cr.status.replace('_',' ').title() }}</span></h1>
+<h1>{{ cr.change_no }} <small style="font-weight:normal;color:#666">(CR-{{ cr.id }})</small> &nbsp;<span class="pill {{cr.status}}">{{ cr.status.replace('_',' ').title() }}</span></h1>
 <ol class="stepper">{% for s in STEPS %}<li class="{{ 'done' if loop.index < step or (cr.status in ('COMPLETED','REJECTED') and loop.index==step) else ('now' if loop.index==step) }}">{{ s }}</li>{% endfor %}</ol>
 
 {% if act %}<div class="card act"><h2>Your action</h2>

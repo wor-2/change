@@ -1,9 +1,9 @@
-import os, uuid
+import os, uuid, hmac
 from functools import wraps
 import psycopg2, psycopg2.extras
 from dotenv import load_dotenv
 load_dotenv()   # reads the .env file next to app.py
-from flask import (Flask, g, request, session, redirect, url_for, render_template, flash, abort, send_from_directory)
+from flask import (Flask, jsonify, g, request, session, redirect, url_for, render_template, flash, abort, send_from_directory)
 from werkzeug.security import check_password_hash, generate_password_hash
 from werkzeug.utils import secure_filename
 import notify
@@ -76,7 +76,7 @@ def ad_login(username, password):
 @app.before_request
 def load_user():
     g.user = q("select * from users where id=%s", (session["uid"],), one=True) if session.get("uid") else None
-    if not g.user and request.endpoint not in ("login", "static"):
+    if not g.user and request.endpoint not in ("login", "static", "api_change"):
         return redirect(url_for("login"))
 
 def need_role(*roles):
@@ -246,6 +246,26 @@ def act(cid, action):
         move(cid, "SUBMITTED", "Requester resubmitted the change")
     flash("Saved. Notifications were sent.", "ok")
     return back
+
+# ---------------------------------------------------------------- API for the Deployment Tracker (rl)
+@app.route("/api/changes/<ref>")
+def api_change(ref):
+    """Read-only lookup by numeric id (CR-<id>) or Change ID (CHG-YYYY-00001). Needs X-API-Key."""
+    key = os.getenv("CHANGE_API_KEY", "")
+    if not key or not hmac.compare_digest(request.headers.get("X-API-Key", ""), key):
+        return jsonify(error="invalid api key"), 401
+    ref = ref.strip()
+    if ref.upper().startswith("CR-"): ref = ref[3:]
+    cr = (q("select c.*, r.email requester_email from change_requests c join users r on r.id=c.requester_id where c.id=%s",
+            (int(ref),), one=True) if ref.isdigit() else
+          q("select c.*, r.email requester_email from change_requests c join users r on r.id=c.requester_id where upper(c.change_no)=upper(%s)",
+            (ref,), one=True))
+    if not cr: return jsonify(error="not found"), 404
+    return jsonify(id=cr["id"], cr_number=f"CR-{cr['id']}", change_no=cr["change_no"], status=cr["status"],
+                   status_label=STATUS_LABEL[cr["status"]], change_type=cr["change_type"], title=cr["title"],
+                   application=cr["application"], environment=cr["environment"], assigned_team=cr["assigned_team"],
+                   requester_email=cr["requester_email"], planned_start=cr["planned_start"].isoformat(),
+                   planned_end=cr["planned_end"].isoformat())
 
 @app.route("/files/<int:fid>")
 def download(fid):
