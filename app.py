@@ -1,4 +1,5 @@
 import os, uuid, hmac
+from datetime import date
 from functools import wraps
 import psycopg2, psycopg2.extras
 from dotenv import load_dotenv
@@ -157,6 +158,17 @@ def notify_all(cr_id, subject, text, whatsapp=False):
             except Exception as e: st = f"FAILED: {e}"[:200]
             q("insert into notifications(change_id,channel,recipient,message,status) values(%s,%s,%s,%s,%s)", (cr_id, ch, r, msg, st), commit=True)
 
+def parse_cab_dates(values):
+    """Return a sorted, de-duplicated comma-separated string of valid YYYY-MM-DD dates (or None if none/invalid)."""
+    out = set()
+    for v in values:
+        for part in (v or "").split(","):
+            part = part.strip()
+            if part:
+                try: out.add(date.fromisoformat(part).isoformat())
+                except ValueError: return None
+    return ",".join(sorted(out)) or None
+
 def cr_approver(cr):
     a = q("select display_name from users where id=%s", (cr["approver_id"],), one=True) if cr["approver_id"] else None
     return a["display_name"] if a else "-"
@@ -222,8 +234,10 @@ def act(cid, action):
             move(cid, "CHANGES_REQUESTED", "Returned to requester at triage", f["triage_notes"], triage_notes=f["triage_notes"])
         else:
             if not (f.get("assigned_team") and f.get("approver_id")): flash("Choose a team and an approver.", "error"); return back
-            move(cid, "ASSESSMENT", f"Triage complete - assigned to {f['assigned_team']}", f["triage_notes"],
-                 assigned_team=f["assigned_team"], approver_id=int(f["approver_id"]), triage_notes=f["triage_notes"])
+            cab = parse_cab_dates(f.getlist("cab_date"))
+            if not cab: flash("Add at least one valid CAB date.", "error"); return back
+            move(cid, "ASSESSMENT", f"Triage complete - assigned to {f['assigned_team']}; CAB date(s): {cab}", f["triage_notes"],
+                 assigned_team=f["assigned_team"], approver_id=int(f["approver_id"]), triage_notes=f["triage_notes"], cab_dates=cab)
     elif action == "assess":    # step 5
         keys = ["business_impact", "technical_impact", "affected_services", "implementation_plan"]
         if not all(f.get(k, "").strip() for k in keys): flash("Complete all four assessment fields.", "error"); return back
@@ -265,7 +279,8 @@ def api_change(ref):
                    status_label=STATUS_LABEL[cr["status"]], change_type=cr["change_type"], title=cr["title"],
                    application=cr["application"], environment=cr["environment"], assigned_team=cr["assigned_team"],
                    requester_email=cr["requester_email"], planned_start=cr["planned_start"].isoformat(),
-                   planned_end=cr["planned_end"].isoformat())
+                   planned_end=cr["planned_end"].isoformat(),
+                   cab_dates=[d for d in (cr["cab_dates"] or "").split(",") if d])
 
 @app.route("/files/<int:fid>")
 def download(fid):

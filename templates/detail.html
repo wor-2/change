@@ -8,6 +8,9 @@
  <label>Decision</label><select name="decision"><option value="accept">Accept and assign</option><option value="return">Return to requester (incomplete)</option></select>
  <div class="grid"><div><label>Assign to team</label><select name="assigned_team"><option value="">Choose…</option>{% for t in TEAMS %}<option>{{t}}</option>{% endfor %}</select></div>
  <div><label>Approver</label><select name="approver_id"><option value="">Choose…</option>{% for a in approvers %}<option value="{{a.id}}">{{a.display_name}}</option>{% endfor %}</select></div></div>
+ <label>CAB date(s) <small>(dates the deployment is allowed; required when accepting)</small></label>
+ <div id="cabdates"><input type="date" name="cab_date"></div>
+ <div class="row"><button type="button" onclick="var i=document.createElement('input');i.type='date';i.name='cab_date';document.getElementById('cabdates').appendChild(i)">+ Add another CAB date</button></div>
  <label>Triage notes</label><textarea name="triage_notes"></textarea>
 {% elif act=='assess' %}
  <label>Business impact</label><textarea name="business_impact"></textarea><label>Technical impact</label><textarea name="technical_impact"></textarea>
@@ -30,6 +33,7 @@
 <dt>Planned window</dt><dd>{{ cr.planned_start.strftime('%d %b %Y %H:%M') }} to {{ cr.planned_end.strftime('%d %b %Y %H:%M') }}</dd>
 <dt>Description</dt><dd>{{ cr.description }}</dd>
 {% if cr.assigned_team %}<dt>Assigned team</dt><dd>{{ cr.assigned_team }}</dd><dt>Approver</dt><dd>{{ cr.approver }}</dd>{% endif %}
+{% if cr.cab_dates %}<dt>CAB date(s)</dt><dd>{{ cr.cab_dates.replace(",", ", ") }}</dd>{% endif %}
 {% if cr.triage_notes %}<dt>Triage notes</dt><dd>{{ cr.triage_notes }}</dd>{% endif %}
 {% if cr.business_impact %}<dt>Business impact</dt><dd>{{ cr.business_impact }}</dd><dt>Technical impact</dt><dd>{{ cr.technical_impact }}</dd>
 <dt>Affected services</dt><dd>{{ cr.affected_services }}</dd><dt>Implementation plan</dt><dd>{{ cr.implementation_plan }}</dd>{% endif %}
